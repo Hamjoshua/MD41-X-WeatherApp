@@ -13,10 +13,15 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
+import retrofit2.http.Query
 
 class WeatherViewModel : ViewModel() {
     private val _weatherData = MutableLiveData<DataResponce>()
+    private val _cityName = MutableLiveData<String>("Shklov")
+    private val _isCelcia = MutableLiveData<Boolean>(true)
     val weatherData: LiveData<DataResponce> get() = _weatherData
+    val cityName: LiveData<String> = _cityName
+    val isCelcia: LiveData<Boolean> = _isCelcia
 
     fun fetchWeather(){
         val daysApi = RetrofitHelper.getInstance().create(DayGetter::class.java)
@@ -26,7 +31,12 @@ class WeatherViewModel : ViewModel() {
         }
 
         viewModelScope.launch{
-            val days = daysApi.check()
+            var units = "standard"
+            if(isCelcia.value!!){
+                units = "metrics"
+            }
+
+            val days = daysApi.check(cityName.value!!, units)
 
             withContext(Dispatchers.Main){
                 if(days.body() != null){
@@ -42,8 +52,9 @@ class WeatherViewModel : ViewModel() {
 }
 
 interface DayGetter {
-    @GET("forecast?q=Shklov,by&appid=${BuildConfig.API_KEY_OPEN_WEATHER_MAP}&units=metric")
-    suspend fun check() : Response<DataResponce>
+    @GET("forecast?appid=${BuildConfig.API_KEY_OPEN_WEATHER_MAP}")
+    suspend fun check(@Query("q") cityName: String,
+                      @Query("units") units: String) : Response<DataResponce>
 }
 
 object RetrofitHelper {
