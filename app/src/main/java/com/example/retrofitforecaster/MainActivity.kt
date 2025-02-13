@@ -27,6 +27,7 @@ class MainActivity : AppCompatActivity() {
             rView.adapter = adapter
         })
 
+        viewModel.fetchWeather()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

@@ -4,9 +4,9 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.Response
@@ -25,7 +25,7 @@ class WeatherViewModel : ViewModel() {
             throwable.printStackTrace()
         }
 
-        GlobalScope.launch(Dispatchers.IO + coroutineExceptionHandler){
+        viewModelScope.launch{
             val days = daysApi.check()
 
             withContext(Dispatchers.Main){
