@@ -1,6 +1,8 @@
 package com.example.retrofitforecaster
 
 import android.util.Log
+import androidx.databinding.BaseObservable
+import androidx.databinding.Bindable
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -17,11 +19,30 @@ import retrofit2.http.Query
 
 class WeatherViewModel : ViewModel() {
     private var _weatherData = MutableLiveData<DataResponce>()
-    private var _cityName = MutableLiveData<String>("Shklov")
-    private var _isCelcia = MutableLiveData<Boolean>(true)
     val weatherData: LiveData<DataResponce> get() = _weatherData
-    var cityName: LiveData<String> = _cityName
-    var isCelcia: LiveData<Boolean> = _isCelcia
+    val binder = Binder()
+
+    class Binder : BaseObservable() {
+        private var _isCelcia: Boolean = true
+
+        @Bindable
+        fun getCelcia(): Boolean {
+            return _isCelcia
+        }
+
+        fun setCelcia(value: Boolean) {
+            _isCelcia = value
+            notifyPropertyChanged(BR.celcia)
+        }
+
+        @get:Bindable
+        var cityName: String = "Shklov"
+            set(value){
+                field = value
+                notifyPropertyChanged(com.example.retrofitforecaster.BR.cityName)
+            }
+
+    }
 
     fun fetchWeather(){
         val daysApi = RetrofitHelper.getInstance().create(DayGetter::class.java)
@@ -32,19 +53,19 @@ class WeatherViewModel : ViewModel() {
 
         viewModelScope.launch{
             var units = "imperial"
-            if(isCelcia.value!! == true){
+            if(binder.getCelcia()){
                 units = "metric"
             }
 
-            Log.d("ViewModel", "Requesting with pars - city: ${cityName.value}," +
-                    " celcia: ${isCelcia.value}")
-            val days = daysApi.check(cityName.value!!, units)
+            Log.d("ViewModel", "Requesting with pars - city: ${binder.cityName}," +
+                    " celcia: ${binder.getCelcia()}")
+            val days = daysApi.check(binder.cityName, units)
 
             withContext(Dispatchers.Main){
                 if(days.body() != null){
                     var dataResponce : DataResponce = days.body()!!
                     dataResponce.list.forEach{
-                        it.main.isCelcia = isCelcia.value!!
+                        it.main.isCelcia = binder.getCelcia()
                     }
                     _weatherData.value = dataResponce
                 }

@@ -24,7 +24,7 @@
 
         <EditText
             android:id="@+id/cityName_tb"
-            android:text="@{viewmodel.cityName}"
+            android:text="@={viewmodel.binder.cityName}"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
@@ -32,7 +32,8 @@
             android:text="@string/switchCelcia_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:checked="@{viewmodel.isCelcia}"/>
+            android:checked="@={viewmodel.binder.celcia}"
+            />
 
         <Button
             android:text="@string/fetchWeather_text"
