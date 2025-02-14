@@ -7,7 +7,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -18,8 +17,8 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 class WeatherViewModel : ViewModel() {
-    private var _weatherData = MutableLiveData<DataResponce>()
-    val weatherData: LiveData<DataResponce> get() = _weatherData
+    private var _weatherData = MutableLiveData<DataResponce?>()
+    val weatherData: LiveData<DataResponce?> get() = _weatherData
     val binder = Binder()
 
     class Binder : BaseObservable() {
@@ -47,10 +46,6 @@ class WeatherViewModel : ViewModel() {
     fun fetchWeather(){
         val daysApi = RetrofitHelper.getInstance().create(DayGetter::class.java)
 
-        val coroutineExceptionHandler = CoroutineExceptionHandler{_, throwable ->
-            throwable.printStackTrace()
-        }
-
         viewModelScope.launch{
             var units = "imperial"
             if(binder.getCelcia()){
@@ -62,12 +57,16 @@ class WeatherViewModel : ViewModel() {
             val days = daysApi.check(binder.cityName, units)
 
             withContext(Dispatchers.Main){
+                var dataResponce: DataResponce? = null
                 if(days.body() != null){
-                    var dataResponce : DataResponce = days.body()!!
-                    dataResponce.list.forEach{
+                    dataResponce = days.body()
+                    dataResponce?.list?.forEach{
                         it.main.isCelcia = binder.getCelcia()
                     }
-                    _weatherData.value = dataResponce
+                    _weatherData.value = dataResponce!!
+                }
+                else{
+                    _weatherData.value = null
                 }
             }
         }

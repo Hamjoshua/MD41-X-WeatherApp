@@ -3,6 +3,7 @@ package com.example.retrofitforecaster
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -29,10 +30,22 @@ class MainActivity : AppCompatActivity() {
         rView.layoutManager = LinearLayoutManager(this)
 
         viewModel.weatherData.observe(this, Observer { item ->
-            Log.d("ListAdapter", "Calling update from MainActivity")
-            val adapter : DayListAdapter = DayListAdapter()
-            adapter.submitList(item.list.toMutableList())
-            rView.adapter = adapter
+            if(item != null){
+                Log.d("ListAdapter", "Calling update from MainActivity")
+                val adapter : DayListAdapter = DayListAdapter()
+                adapter.submitList(item.list.toMutableList())
+                rView.adapter = adapter
+                Toast.makeText(this, "Погода для города" +
+                        " ''${viewModel.binder.cityName}''", Toast.LENGTH_LONG)
+                    .show()
+            }
+            else{
+                Log.d("ListAdapter", "Empty response")
+                Toast.makeText(this, "Город с таким названием " +
+                        "не существует", Toast.LENGTH_LONG)
+                    .show()
+            }
+
         })
 
         viewModel.fetchWeather()
