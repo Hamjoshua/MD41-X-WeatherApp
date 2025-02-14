@@ -3,10 +3,17 @@ package com.example.retrofitforecaster
 import com.google.gson.annotations.SerializedName
 
 data class Main(
-    @SerializedName("temp") val temp: Double
+    @SerializedName("temp") val temp: Double,
+    var isCelcia: Boolean
 ){
     fun getTempAsString() : String{
-        return "${temp}° C"
+        if(isCelcia){
+            return "${temp}° C"
+        }
+        else{
+            return "${temp}° F"
+        }
+
     }
 }
 data class Weather(

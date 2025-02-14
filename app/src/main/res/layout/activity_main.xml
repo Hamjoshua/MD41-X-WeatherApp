@@ -4,6 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+        <variable
+            name="viewmodel"
+            type="com.example.retrofitforecaster.WeatherViewModel" />
 
     </data>
 
@@ -20,10 +23,22 @@
             android:layout_height="wrap_content" />
 
         <EditText
-            android:text="@{}"
             android:id="@+id/cityName_tb"
+            android:text="@{viewmodel.cityName}"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:text="@string/switchCelcia_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checked="@{viewmodel.isCelcia}"/>
+
+        <Button
+            android:text="@string/fetchWeather_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="@{() -> viewmodel.fetchWeather()}"/>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/r_view"
