@@ -17,9 +17,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         // Ставим тулбарчик
         setSupportActionBar(findViewById(R.id.toolbar))
@@ -30,9 +30,16 @@ class MainActivity : AppCompatActivity() {
         // Даем кнопке право менять погоду
         bindFetchButtonToViewModel()
 
-        viewModel.fetchWeather(viewModel.isCelcia.value!!, viewModel.cityName.value!!)
+        // Иницализация данных на вьюхе
+        initBinding()
     }
 
+    fun initBinding(){
+        binding.cityNameTb.setText(viewModel.cityName.value)
+        binding.isCelciaSw.setChecked(viewModel.isCelcia.value!!)
+
+        viewModel.fetchWeather(viewModel.isCelcia.value!!, viewModel.cityName.value!!)
+    }
     fun bindFetchButtonToViewModel(){
         binding.fetchWeatherBtn.setOnClickListener {
             viewModel.fetchWeather(binding.isCelciaSw.isChecked, binding.cityNameTb.text.toString())
@@ -47,7 +54,7 @@ class MainActivity : AppCompatActivity() {
                 fetchListAdapter(item.list.toMutableList())
 
                 Toast.makeText(this, "Погода для города" +
-                        " ''${binding.cityNameTb}''", Toast.LENGTH_LONG)
+                        " ''${binding.cityNameTb.getText()}''", Toast.LENGTH_LONG)
                     .show()
             }
             else{

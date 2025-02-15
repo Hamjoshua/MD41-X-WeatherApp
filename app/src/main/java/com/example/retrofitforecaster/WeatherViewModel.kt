@@ -20,7 +20,6 @@ class WeatherViewModel : ViewModel() {
     init{
         _cityName.value = "Shklov"
         _isCelcia.value = true
-        // fetchWeather(isCelcia.value!!, _cityName.value!!)
     }
 
     fun updateValues(externalIsCelcia: Boolean, externalCityName: String){
@@ -29,7 +28,7 @@ class WeatherViewModel : ViewModel() {
     }
 
     fun fetchWeather(isCelcia: Boolean, cityName: String){
-        val daysApi = RetrofitHelper.getInstance().create(DayGetter::class.java)
+        val daysApi = RetrofitHelper.getInstance().create(DayAPIGetter::class.java)
 
         viewModelScope.launch{
             var units = "imperial"
@@ -42,19 +41,14 @@ class WeatherViewModel : ViewModel() {
             val days = daysApi.check(cityName, units)
 
             withContext(Dispatchers.Main){
-                var dataResponce: DataResponce? = null
-                if(days.body() != null){
-                    dataResponce = days.body()
-                    dataResponce?.list?.forEach{
-                        it.main.isCelcia = isCelcia
+                days.body()?.let {
+                    var dataResponce: DataResponce = it
+                    dataResponce.apply {
+                        list?.forEach{
+                            it.main.isCelcia = isCelcia
+                        }
                     }
-                    _weatherData.value = dataResponce!!
-
-                    // Если запрос прошел, значит, данные можно сохранить
-                    updateValues(isCelcia, cityName)
-                }
-                else{
-                    _weatherData.value = null
+                    _weatherData.value = dataResponce
                 }
             }
         }

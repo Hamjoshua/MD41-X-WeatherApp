@@ -7,7 +7,7 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 
-interface DayGetter {
+interface DayAPIGetter {
     @GET("forecast?appid=${BuildConfig.API_KEY_OPEN_WEATHER_MAP}")
     suspend fun check(@Query("q") cityName: String,
                       @Query("units") units: String) : Response<DataResponce>
