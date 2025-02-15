@@ -6,7 +6,6 @@ import android.view.Menu
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -20,23 +19,35 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-        binding.lifecycleOwner = this
-        binding.viewmodel = viewModel
+        binding = ActivityMainBinding.inflate(layoutInflater)
 
+        // Ставим тулбарчик
         setSupportActionBar(findViewById(R.id.toolbar))
 
-        val rView: RecyclerView = findViewById<RecyclerView>(R.id.r_view)
-        rView.layoutManager = LinearLayoutManager(this)
+        // Ставим наблюдателя за погодой
+        setObserverToWeather()
 
+        // Даем кнопке право менять погоду
+        bindFetchButtonToViewModel()
+
+        viewModel.fetchWeather(viewModel.isCelcia.value!!, viewModel.cityName.value!!)
+    }
+
+    fun bindFetchButtonToViewModel(){
+        binding.fetchWeatherBtn.setOnClickListener {
+            viewModel.fetchWeather(binding.isCelciaSw.isChecked, binding.cityNameTb.text.toString())
+        }
+    }
+
+    fun setObserverToWeather(){
         viewModel.weatherData.observe(this, Observer { item ->
             if(item != null){
                 Log.d("ListAdapter", "Calling update from MainActivity")
-                val adapter : DayListAdapter = DayListAdapter()
-                adapter.submitList(item.list.toMutableList())
-                rView.adapter = adapter
+
+                fetchListAdapter(item.list.toMutableList())
+
                 Toast.makeText(this, "Погода для города" +
-                        " ''${viewModel.binder.cityName}''", Toast.LENGTH_LONG)
+                        " ''${binding.cityNameTb}''", Toast.LENGTH_LONG)
                     .show()
             }
             else{
@@ -47,8 +58,15 @@ class MainActivity : AppCompatActivity() {
             }
 
         })
+    }
 
-        viewModel.fetchWeather()
+    fun fetchListAdapter(list: MutableList<DayPrognosis>){
+        val rView: RecyclerView = binding.rView
+        rView.layoutManager = LinearLayoutManager(this)
+
+        val adapter : DayListAdapter = DayListAdapter()
+        adapter.submitList(list)
+        rView.adapter = adapter
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
