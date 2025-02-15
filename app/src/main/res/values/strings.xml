@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">RetrofitForecaster</string>
+    <string name="app_name">Просмотр погоды</string>
+    <string name="switchCelcia_text">Фаренгейт/Цельсия</string>
+    <string name="fetchWeather_text">Обновить погоду</string>
 </resources>

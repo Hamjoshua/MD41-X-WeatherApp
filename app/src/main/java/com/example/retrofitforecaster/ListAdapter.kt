@@ -46,7 +46,17 @@ class DayListAdapter() : ListAdapter<DayPrognosis, ViewHolder>(DayDiffCallback()
 
     override fun getItemViewType(position: Int): Int {
         val day: DayPrognosis = currentList[position]
-        if (day.main.temp > 0) {
+
+        var greaterThenZero: Boolean
+
+        if(day.main.isCelcia){
+            greaterThenZero = day.main.temp > 0
+        }
+        else{
+            greaterThenZero = day.main.temp > 32
+        }
+
+        if (greaterThenZero) {
             return VIEW_TYPE_HOT
         }
         return VIEW_TYPE_COLD

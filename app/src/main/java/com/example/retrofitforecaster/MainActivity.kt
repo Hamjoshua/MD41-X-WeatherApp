@@ -1,78 +1,79 @@
 package com.example.retrofitforecaster
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
+import android.widget.Toast
+import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import retrofit2.Call
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
+import com.example.retrofitforecaster.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
-    private val DATA_KEY = "DATA_KEY"
-    private lateinit var dataResponce: DataResponce
+    private val viewModel: WeatherViewModel by viewModels<WeatherViewModel>()
+    private lateinit var binding: ActivityMainBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        // Ставим тулбарчик
         setSupportActionBar(findViewById(R.id.toolbar))
-        getSupportActionBar()?.setTitle("Shklov")
 
-        val rView: RecyclerView = findViewById<RecyclerView>(R.id.r_view)
-        rView.layoutManager = LinearLayoutManager(this)
-        val daysApi = RetrofitHelper.getInstance().create(DayGetter::class.java)
+        // Ставим наблюдателя за погодой
+        setObserverToWeather()
 
-        val coroutineExceptionHandler = CoroutineExceptionHandler{_, throwable ->
-            throwable.printStackTrace()
-        }
+        // Даем кнопке право менять погоду
+        bindFetchButtonToViewModel()
 
-        if(savedInstanceState == null){
-            Log.d("SavedInstace", "Первый запуск")
-
-            GlobalScope.launch(Dispatchers.IO + coroutineExceptionHandler){
-                val days = daysApi.check()
-
-                withContext(Dispatchers.Main){
-                    if(days.body() != null){
-                        dataResponce = days.body()!!
-                        Log.d("Days go by", days.body().toString())
-                        val adapter : DayListAdapter = DayListAdapter()
-                        adapter.submitList(dataResponce.list.toMutableList())
-                        rView.adapter = adapter
-                    }
-                }
-            }
-        }
-        else {
-            Log.d("SavedInstace", "Не первый запуск")
-            val jsonText = savedInstanceState.getString(DATA_KEY)
-            var gson = Gson()
-            dataResponce = gson.fromJson(jsonText, DataResponce::class.java)
-            val adapter : DayListAdapter = DayListAdapter()
-            adapter.submitList(dataResponce.list.toMutableList())
-            rView.adapter = adapter
-        }
-
+        // Иницализация данных на вьюхе
+        initBinding()
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
+    fun initBinding(){
+        binding.cityNameTb.setText(viewModel.cityName.value)
+        binding.isCelciaSw.setChecked(viewModel.isCelcia.value!!)
 
-        val gson = Gson()
-        val jsonText = gson.toJson(dataResponce)
-        outState.putString(DATA_KEY, jsonText)
+        viewModel.fetchWeather(viewModel.isCelcia.value!!, viewModel.cityName.value!!)
+    }
+    fun bindFetchButtonToViewModel(){
+        binding.fetchWeatherBtn.setOnClickListener {
+            viewModel.fetchWeather(binding.isCelciaSw.isChecked, binding.cityNameTb.text.toString())
+        }
+    }
+
+    fun setObserverToWeather(){
+        viewModel.weatherData.observe(this, Observer { item ->
+            if(item != null){
+                Log.d("ListAdapter", "Calling update from MainActivity")
+
+                fetchListAdapter(item.list.toMutableList())
+
+                Toast.makeText(this, "Погода для города" +
+                        " ''${binding.cityNameTb.getText()}''", Toast.LENGTH_LONG)
+                    .show()
+            }
+            else{
+                Log.d("ListAdapter", "Empty response")
+                Toast.makeText(this, "Город с таким названием " +
+                        "не существует", Toast.LENGTH_LONG)
+                    .show()
+            }
+
+        })
+    }
+
+    fun fetchListAdapter(list: MutableList<DayPrognosis>){
+        val rView: RecyclerView = binding.rView
+        rView.layoutManager = LinearLayoutManager(this)
+
+        val adapter : DayListAdapter = DayListAdapter()
+        adapter.submitList(list)
+        rView.adapter = adapter
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -82,37 +83,5 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-interface DayGetter {
-    @GET("forecast?q=Shklov,by&appid=${BuildConfig.API_KEY_OPEN_WEATHER_MAP}&units=metric")
-    suspend fun check() : Response<DataResponce>
-}
 
-object RetrofitHelper {
-    val baseUrl = "http://api.openweathermap.org/data/2.5/"
-    fun getInstance(): Retrofit {
-        return Retrofit.Builder().baseUrl(baseUrl)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
-}
 
-data class Main(
-    @SerializedName("temp") val temp: Double
-){
-    fun getTempAsString() : String{
-        return "${temp}° C"
-    }
-}
-data class Weather(
-    @SerializedName("main") val main: String,
-    @SerializedName("icon") val icon: String
-)
-data class DayPrognosis (
-    @SerializedName("dt_txt") val dt_txt: String,
-    @SerializedName("main") val main: Main,
-    @SerializedName("weather") val weather: ArrayList<Weather>
-)
-
-data class DataResponce(
-    @SerializedName("list") val list: ArrayList<DayPrognosis>
-)
